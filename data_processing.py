@@ -97,8 +97,10 @@ class Table:
 
 table1 = Table('cities', cities)
 table2 = Table('countries', countries)
+
 player = Table('players', players)
 team = Table('teams', teams)
+
 titan = Table('titanic', titanics)
 
 my_DB = DB()
@@ -135,6 +137,35 @@ player_table_filter_forward = player_table.filter(
 print('forwards passes =', player_table_filter_forward)
 print('vs')
 print('midfielders passes =', player_table_filter_midfield)
+
+print()
+titan_table = my_DB.search('titanic')
+titan_table_filter_fare_1 = titan_table.filter(
+    lambda x: int(x['class']) == 1).aggregate(lambda x: sum(x) / len(x),
+                                              'fare')
+titan_table_filter_fare_3 = titan_table.filter(
+    lambda x: int(x['class']) == 3).aggregate(lambda x: sum(x) / len(x),
+                                              'fare')
+print('1st class fare =', titan_table_filter_fare_1)
+print('vs')
+print('3rd class fare =', titan_table_filter_fare_3)
+
+print()
+titan_table_filter_M = titan_table.filter(
+    lambda x: x['gender'] == "M")
+titan_table_filter_M_survive = titan_table_filter_M.filter(
+    lambda x: x['survived'] == 'yes')
+titan_table_filter_F = titan_table.filter(
+    lambda x: x['gender'] == "F")
+titan_table_filter_F_survive = titan_table_filter_F.filter(
+    lambda x: x['survived'] == 'yes')
+m_survive_rate = len(titan_table_filter_M_survive.table) / len(
+    titan_table_filter_M.table) * 100
+f_survive_rate = len(titan_table_filter_F_survive.table) / len(
+    titan_table_filter_F.table) * 100
+print("Male survive rate =", m_survive_rate, "%")
+print("vs")
+print("Female survive rate =", f_survive_rate, "%")
 
 # my_table1 = my_DB.search('cities')
 
