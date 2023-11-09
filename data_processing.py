@@ -167,6 +167,12 @@ print("Male survive rate =", m_survive_rate, "%")
 print("vs")
 print("Female survive rate =", f_survive_rate, "%")
 
+print()
+titan_table_filter_M_Southampton = titan_table_filter_M.filter(
+    lambda x: x['embarked'] == 'Southampton')
+print('total number of male passengers embarked at Southampton'
+      ' =', len(titan_table_filter_M_Southampton.table))
+
 # my_table1 = my_DB.search('cities')
 
 # print("Test filter: only filtering out cities in Italy")
