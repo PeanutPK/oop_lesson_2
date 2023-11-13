@@ -36,7 +36,7 @@ def gen_comb_list(list_set):
             temp_item.append(val)
             start_list.append(temp_item)
     return start_list
-# Thank you for your kindness A.Paruj
+    # Thank you for your kindness A.Paruj
 
 
 print(gen_comb_list([[1, 2, 3]]))
