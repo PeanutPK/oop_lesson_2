@@ -1,4 +1,7 @@
-import csv, os
+import csv
+import os
+import copy
+import combination_gen
 
 __location__ = os.path.realpath(
     os.path.join(os.getcwd(), os.path.dirname(__file__)))
@@ -27,11 +30,11 @@ with open(os.path.join(__location__, 'Teams.csv')) as f:
     for r in rows:
         teams.append(dict(r))
 
-titanics = []
+titanic = []
 with open(os.path.join(__location__, 'Titanic.csv')) as f:
     rows = csv.DictReader(f)
     for r in rows:
-        titanics.append(dict(r))
+        titanic.append(dict(r))
 
 
 class DB:
@@ -48,13 +51,30 @@ class DB:
         return None
 
 
-import copy
-
-
 class Table:
     def __init__(self, table_name, table):
         self.table_name = table_name
         self.table = table
+
+    def pivot_table(self, keys_to_pivot_list, keys_to_aggregate_list,
+                    aggregate_func_list):
+        pivot_table = []
+        unique_values_list = []
+        for key_pivot in keys_to_pivot_list:
+            _list = []
+            for value in self.select(key_pivot):
+                if value.get(key_pivot) not in _list:
+                    _list.append(value.get(key_pivot))
+            unique_values_list.append(_list)
+        combination = combination_gen.gen_comb_list(unique_values_list)
+        for comb in combination:
+            _list = []
+            for fx in aggregate_func_list:
+                _list = self.filter(lambda x: x in comb).aggregate(
+                    lambda x: fx, keys_to_aggregate_list)
+                print(_list)
+            pivot_table.append(_list)
+        return Table(self.table_name, pivot_table)
 
     def join(self, other_table, common_key):
         joined_table = Table(
@@ -113,7 +133,7 @@ table2 = Table('countries', countries)
 player = Table('players', players)
 team = Table('teams', teams)
 
-titan = Table('titanic', titanics)
+titan = Table('titanic', titanic)
 
 my_DB = DB()
 my_DB.insert(table1)
@@ -122,63 +142,78 @@ my_DB.insert(player)
 my_DB.insert(team)
 my_DB.insert(titan)
 
-player_table = my_DB.search('players')
-player_table_filter_team = player_table.filter(lambda x: 'ia' in x['team'] and
-                                                         int(x[
-                                                                 'minutes']) < 200 and
-                                                         int(x[
-                                                                 'passes']) > 100)
-print(player_table_filter_team.select(['surname', 'team', 'position']))
+table4 = Table('titanic', titanic)
+my_DB.insert(table4)
+my_table4 = my_DB.search('titanic')
+my_pivot = my_table4.pivot_table(['embarked', 'gender', 'class'],
+                                 ['fare', 'fare', 'fare', 'last'],
+                                 [lambda x: min(x), lambda x: max(x),
+                                  lambda x: sum(x) / len(x), lambda x: len(x)])
 
-team_table = my_DB.search('teams')
-team_table_rank_avg_b10 = (team_table.filter(lambda x: int(x['ranking']) < 10)
-                           .aggregate(lambda x: sum(x) / len(x), 'games'))
-team_table_rank_avg_a10 = (team_table.filter(lambda x: int(x['ranking']) >= 10)
-                           .aggregate(lambda x: sum(x) / len(x), 'games'))
-print("ranking below 10 =", team_table_rank_avg_b10)
-print('vs')
-print("ranking above 10 =", team_table_rank_avg_a10)
 
-print()
-player_table_filter_midfield = player_table.filter(
-    lambda x: x['position'] == 'midfielder').aggregate(
-    lambda x: sum(x) / len(x), 'passes')
-player_table_filter_forward = player_table.filter(
-    lambda x: x['position'] == 'forward').aggregate(
-    lambda x: sum(x) / len(x), 'passes')
-print('forwards passes =', player_table_filter_forward)
-print('vs')
-print('midfielders passes =', player_table_filter_midfield)
+def tsk1_tsk2():
+    player_table = my_DB.search('players')
+    player_table_filter_team = player_table.filter(
+        lambda x: 'ia' in x['team'] and
+                  int(x[
+                          'minutes']) < 200 and
+                  int(x[
+                          'passes']) > 100)
+    print(player_table_filter_team.select(['surname', 'team', 'position']))
 
-print()
-titan_table = my_DB.search('titanic')
-titan_table_filter_fare_1 = titan_table.filter(
-    lambda x: int(x['class']) == 1).aggregate(lambda x: sum(x) / len(x),
-                                              'fare')
-titan_table_filter_fare_3 = titan_table.filter(
-    lambda x: int(x['class']) == 3).aggregate(lambda x: sum(x) / len(x),
-                                              'fare')
-print('1st class fare =', titan_table_filter_fare_1)
-print('vs')
-print('3rd class fare =', titan_table_filter_fare_3)
+    team_table = my_DB.search('teams')
+    team_table_rank_avg_b10 = (
+        team_table.filter(lambda x: int(x['ranking']) < 10)
+        .aggregate(lambda x: sum(x) / len(x), 'games'))
+    team_table_rank_avg_a10 = (
+        team_table.filter(lambda x: int(x['ranking']) >= 10)
+        .aggregate(lambda x: sum(x) / len(x), 'games'))
+    print("ranking below 10 =", team_table_rank_avg_b10)
+    print('vs')
+    print("ranking above 10 =", team_table_rank_avg_a10)
 
-print()
-titan_table_filter_M = titan_table.filter(
-    lambda x: x['gender'] == "M")
-titan_table_filter_M_survive = titan_table_filter_M.filter(
-    lambda x: x['survived'] == 'yes')
-titan_table_filter_F = titan_table.filter(
-    lambda x: x['gender'] == "F")
-titan_table_filter_F_survive = titan_table_filter_F.filter(
-    lambda x: x['survived'] == 'yes')
-m_survive_rate = len(titan_table_filter_M_survive.table) / len(
-    titan_table_filter_M.table) * 100
-f_survive_rate = len(titan_table_filter_F_survive.table) / len(
-    titan_table_filter_F.table) * 100
-print("Male survive rate =", m_survive_rate, "%")
-print("vs")
-print("Female survive rate =", f_survive_rate, "%")
+    print()
+    player_table_filter_midfield = player_table.filter(
+        lambda x: x['position'] == 'midfielder').aggregate(
+        lambda x: sum(x) / len(x), 'passes')
+    player_table_filter_forward = player_table.filter(
+        lambda x: x['position'] == 'forward').aggregate(
+        lambda x: sum(x) / len(x), 'passes')
+    print('forwards passes =', player_table_filter_forward)
+    print('vs')
+    print('midfielders passes =', player_table_filter_midfield)
 
+    print()
+    titan_table = my_DB.search('titanic')
+    titan_table_filter_fare_1 = titan_table.filter(
+        lambda x: int(x['class']) == 1).aggregate(lambda x: sum(x) / len(x),
+                                                  'fare')
+    titan_table_filter_fare_3 = titan_table.filter(
+        lambda x: int(x['class']) == 3).aggregate(lambda x: sum(x) / len(x),
+                                                  'fare')
+    print('1st class fare =', titan_table_filter_fare_1)
+    print('vs')
+    print('3rd class fare =', titan_table_filter_fare_3)
+
+    print()
+    titan_table_filter_M = titan_table.filter(
+        lambda x: x['gender'] == "M")
+    titan_table_filter_M_survive = titan_table_filter_M.filter(
+        lambda x: x['survived'] == 'yes')
+    titan_table_filter_F = titan_table.filter(
+        lambda x: x['gender'] == "F")
+    titan_table_filter_F_survive = titan_table_filter_F.filter(
+        lambda x: x['survived'] == 'yes')
+    m_survive_rate = len(titan_table_filter_M_survive.table) / len(
+        titan_table_filter_M.table) * 100
+    f_survive_rate = len(titan_table_filter_F_survive.table) / len(
+        titan_table_filter_F.table) * 100
+    print("Male survive rate =", m_survive_rate, "%")
+    print("vs")
+    print("Female survive rate =", f_survive_rate, "%")
+
+
+tsk1_tsk2()
 # my_table1 = my_DB.search('cities')
 
 # print("Test filter: only filtering out cities in Italy")

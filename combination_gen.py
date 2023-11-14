@@ -38,9 +38,9 @@ def gen_comb_list(list_set):
     return start_list
     # Thank you for your kindness A.Paruj
 
-
-print(gen_comb_list([[1, 2, 3]]))
-print()
-print(gen_comb_list([[1, 2, 3], [4, 5]]))
-print()
-print(gen_comb_list([[1, 2, 3], [4, 5], [6, 7, 8]]))
+# test
+# print(gen_comb_list([[1, 2, 3]]))
+# print()
+# print(gen_comb_list([[1, 2, 3], [4, 5]]))
+# print()
+# print(gen_comb_list([[1, 2, 3], [4, 5], [6, 7, 8]]))
