@@ -58,7 +58,6 @@ class Table:
 
     def pivot_table(self, keys_to_pivot_list, keys_to_aggregate_list,
                     aggregate_func_list):
-        pivot_table = []
         unique_values_list = []
         for key_pivot in keys_to_pivot_list:
             _list = []
@@ -67,13 +66,19 @@ class Table:
                     _list.append(value.get(key_pivot))
             unique_values_list.append(_list)
         combination = combination_gen.gen_comb_list(unique_values_list)
+
+        pivot_table = []
         for comb in combination:
-            _list = []
-            for fx in aggregate_func_list:
-                _list = self.filter(lambda x: x in comb).aggregate(
-                    lambda x: fx, keys_to_aggregate_list)
-                print(_list)
-            pivot_table.append(_list)
+            value = []
+            filtered = []
+            for aggregate_keys in keys_to_aggregate_list:
+                for fx in aggregate_func_list:
+                    for key_p in keys_to_pivot_list:
+                        for c in comb:
+                            filtered = self.filter(lambda x: x[key_p] == c)
+                        value.append(filtered.aggregate(fx, aggregate_keys))
+            pivot_table.append(value)
+            print(pivot_table)
         return Table(self.table_name, pivot_table)
 
     def join(self, other_table, common_key):
@@ -151,7 +156,7 @@ my_pivot = my_table4.pivot_table(['embarked', 'gender', 'class'],
                                   lambda x: sum(x) / len(x), lambda x: len(x)])
 
 
-def tsk1_tsk2():
+def tsk1_tsk2_incomplete():
     player_table = my_DB.search('players')
     player_table_filter_team = player_table.filter(
         lambda x: 'ia' in x['team'] and
@@ -212,8 +217,6 @@ def tsk1_tsk2():
     print("vs")
     print("Female survive rate =", f_survive_rate, "%")
 
-
-tsk1_tsk2()
 # my_table1 = my_DB.search('cities')
 
 # print("Test filter: only filtering out cities in Italy")
