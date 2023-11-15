@@ -66,19 +66,27 @@ class Table:
                     _list.append(value.get(key_pivot))
             unique_values_list.append(_list)
         combination = gen_comb_list(unique_values_list)
-        print(combination)
 
         pivot_table = []
         for comb in combination:
-            value = []
-            for aggregate_keys in keys_to_aggregate_list:
-                for fx in aggregate_func_list:
-                    for key_p in keys_to_pivot_list:
-                        for c in comb:
-                            filtered = self.filter(lambda x: x[key_p] == c)
-                            value.append(filtered.aggregate(fx, aggregate_keys))
-            pivot_table.append([comb, value])
-            print(pivot_table)
+            pivot_table.append([comb])
+        i = 0
+        for comb in combination:
+            filtered = self
+            j = 0
+            k = 0
+            value_list = []
+            for c in comb:
+                filtered = filtered.filter(
+                    lambda x: x[keys_to_pivot_list[k]] == c)
+                k += 1
+            for key_agg in keys_to_aggregate_list:
+                value = filtered.aggregate(aggregate_func_list[j], key_agg)
+                value_list.append(value)
+                j += 1
+            pivot_table[i].append(value_list)
+            i += 1
+        print(Table(self.table_name, pivot_table).table)
         return Table(self.table_name, pivot_table)
 
     def join(self, other_table, common_key):
